@@ -344,15 +344,15 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 imgs_branch = hf_enhance(imgs)
 
             # Forward
-            with torch.cuda.amp.autocast(amp):
+            with torch.amp.autocast('cuda'):
                 alpha = 0
                 if opt.AFAL:
                     # AFAL Strategy
                     alpha = opt.alpha
-                    pred_sp, aligned_feature = model(imgs_branch, save_feature = opt.feature_layer) 
+                    pred_sp, aligned_feature = model(imgs_branch, save_feature=opt.feature_layer)
                     aux_loss, aux_loss_items = compute_loss(pred_sp, targets.to(device))  # loss scaled by batch_size
 
-                pred, origin_feature = model(imgs, save_feature = opt.feature_layer)  
+                pred, origin_feature = model(imgs, save_feature=opt.feature_layer)
                 loss, loss_items = compute_loss(pred, targets.to(device))
 
                 if opt.AFAL:
@@ -364,11 +364,11 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                     loss = (1 - alpha) * loss + alpha * aux_loss + align_item
                     loss_items = (1 - alpha) * loss_items + alpha * aux_loss_items
 
-
                 if RANK != -1:
                     loss *= WORLD_SIZE  # gradient averaged between devices in DDP mode
                 if opt.quad:
                     loss *= 4.
+
 
             # Backward
             scaler.scale(loss).backward()
